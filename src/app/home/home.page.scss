@@ -1,27 +1,73 @@
-#container {
-  text-align: center;
+.tabla-grid {
+  margin-top: 16px;
+  border-radius: 12px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.2);
+  border: 1px solid #cccccc;
+  overflow: hidden;
+  padding: 0;
 
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: 50%;
-  transform: translateY(-50%);
+  .tabla-header {
+    background-color: #3880ff;
+    color: #ffffff;
+    font-weight: 600;
+    font-size: 14px;
+
+    ion-col {
+      padding: 12px 14px;
+      border-right: 1px solid rgba(255, 255, 255, 0.4);
+      white-space: nowrap;
+
+      &:last-child { border-right: none; }
+    }
+  }
+
+  .tabla-fila {
+    font-size: 14px;
+    transition: background 0.15s ease;
+    border-top: 1px solid #cccccc;
+
+    &:nth-child(even) { background-color: #f4f4f4; }
+    &:hover { background-color: #dce8ff; }
+
+    ion-col {
+      padding: 10px 14px;
+      border-right: 1px solid #cccccc;
+
+      &:last-child { border-right: none; }
+
+      &.center {
+        text-align: center;
+        white-space: nowrap;
+      }
+
+      &.col-nombre { font-weight: 500; }
+
+      &.col-direccion {
+        white-space: normal;
+        word-break: break-word;
+        line-height: 1.4;
+      }
+
+      &.col-phone { white-space: nowrap; }
+
+      ion-icon {
+        font-size: 18px;
+        vertical-align: middle;
+      }
+    }
+  }
 }
 
-#container strong {
+.web-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #3880ff;
   font-size: 20px;
-  line-height: 26px;
-}
+  transition: transform 0.15s ease, color 0.15s ease;
 
-#container p {
-  font-size: 16px;
-  line-height: 22px;
-
-  color: #8c8c8c;
-
-  margin: 0;
-}
-
-#container a {
-  text-decoration: none;
+  &:hover {
+    color: #2d6fe0;
+    transform: scale(1.2);
+  }
 }
