@@ -1,9 +1,9 @@
 import { Component, signal, computed, inject } from '@angular/core';
-import { Firestore, collection, addDoc, getDocs, deleteDoc, doc } from '@angular/fire/firestore';
 import restaurantesJSON from '../../assets/datos/restaurantes.json';
 import { IonicModule } from '@ionic/angular';
 import { AlertController, ToastController, LoadingController } from '@ionic/angular';
 import { Restaurante } from '../interface/restaurante';
+import { RestauranteService } from '../services/restaurante.service';
 
 
 import { addIcons } from 'ionicons';
@@ -24,7 +24,7 @@ import {
 export class HomePage {
 
   //Inject se usa para obtener instancias de servicios en componentes standalone sin necesidad de un constructor explícito
-  firestore = inject(Firestore);
+  restauranteService = inject(RestauranteService);
   alertCtrl = inject(AlertController);
   toastCtrl = inject(ToastController);
   loadingCtrl = inject(LoadingController);
@@ -165,7 +165,6 @@ export class HomePage {
 
   async importarJSON() {
     this.importando.set(true);
-    const datosCollection = collection(this.firestore, 'restaurantesColleccion');
 
     const loading = await this.loadingCtrl.create({
       message: 'Borrando datos anteriores...',
@@ -174,17 +173,12 @@ export class HomePage {
     await loading.present();
 
     try {
-      const snapshot = await getDocs(datosCollection);
-      await Promise.all(
-        snapshot.docs.map(d => deleteDoc(doc(this.firestore, 'restaurantesColleccion', d.id)))
-      );
+      await this.restauranteService.deleteAll();
 
       loading.message = 'Subiendo restaurantes...';
       this.estadoImportacion.set('Subiendo restaurantes...');
 
-      for (const r of this.restaurantes) {
-        await addDoc(datosCollection, r);
-      }
+      await this.restauranteService.addAll(this.restaurantes);
 
       await loading.dismiss();
       this.estadoImportacion.set('');
@@ -206,13 +200,12 @@ export class HomePage {
   async cargarDatos() {
     this.cargando.set(true);
     this.estadoCarga.set('Cargando restaurantes...');
-    const datosCollection = collection(this.firestore, 'restaurantesColleccion');
 
     try {
-      const snapshot = await getDocs(datosCollection);
-      this.restaurantesCargados.set(snapshot.docs.map(d => d.data() as Restaurante));
+      const lista = await this.restauranteService.getAll();
+      this.restaurantesCargados.set(lista);
       this.estadoCarga.set('');
-      await this.mostrarToast(`✅ ${snapshot.docs.length} restaurantes cargados`, 'success');
+      await this.mostrarToast(`✅ ${lista.length} restaurantes cargados`, 'success');
 
     } catch (error: any) {
       console.error('Error al cargar datos:', error);
@@ -228,22 +221,13 @@ export class HomePage {
   }
 
   async exportarJSON() {
-    // 1. Obtiene todos los documentos de la colección en Firestore
-  const snapshot = await getDocs(collection(this.firestore, 'restaurantesColleccion'));
-  // 2. Extrae solo los datos de cada documento (sin metadatos de Firestore como id, ref, etc.)
-  const datos = snapshot.docs.map(d => d.data());
-  // 3. Convierte el array de objetos a texto JSON con formato legible (2 espacios de indentación)
-  const blob = new Blob([JSON.stringify(datos, null, 2)], { type: 'application/json' });
-  // 4. Crea una URL temporal en memoria que apunta a ese blob
-  const url = URL.createObjectURL(blob);
-  // 5. Crea un elemento <a> invisible en el DOM
-  const a = document.createElement('a');
-  // 6. Le asigna la URL del blob como destino del enlace
-  a.href = url;
-  // 7. Le indica al navegador que en vez de navegar, debe descargar con ese nombre
-  a.download = 'restaurantes_backup.json';
-  // 8. Simula un clic en el enlace → el navegador dispara la descarga
-  a.click();
+    const datos = await this.restauranteService.getAll();
+    const blob = new Blob([JSON.stringify(datos, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'restaurantes_backup.json';
+    a.click();
   }
 
   estrellasMichelin(r: Restaurante): number[] {
