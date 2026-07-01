@@ -4,9 +4,6 @@
     <!-- ✅ H2: Botones admin en header como iconos, lenguaje de usuario no técnico -->
     <!-- ✅ H8: Añadidos botones más pequeños y con iconos para acciones de carga/importación -->
     <ion-buttons slot="end">
-      <ion-button (click)="abrirFormulario()" title="Añadir restaurante">
-        <ion-icon slot="icon-only" name="add-outline"></ion-icon>
-      </ion-button>
       <ion-button
         (click)="confirmarImportacion()"
         [disabled]="importando()"
@@ -36,7 +33,7 @@
       <ion-icon slot="start" name="information-circle-outline" color="primary"></ion-icon>
       <ion-label class="ion-text-wrap">
         Usa <ion-icon name="restaurant-outline"></ion-icon> <strong>Cargar</strong> para ver los datos,
-        , <ion-icon name="cloud-upload-outline"></ion-icon> <strong>Actualizar</strong> para subir datos nuevos a Firebase.
+        <ion-icon name="cloud-upload-outline"></ion-icon> <strong>Actualizar</strong> para subir datos nuevos a Firebase,
         o <ion-icon name="download-outline"></ion-icon> <strong>Exportar</strong> para guardar los datos en tu dispositivo.
       </ion-label>
     </ion-item>

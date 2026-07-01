@@ -4,17 +4,14 @@ import restaurantesJSON from '../../assets/datos/restaurantes.json';
 import { IonicModule } from '@ionic/angular';
 import { AlertController, ToastController, LoadingController } from '@ionic/angular';
 import { Restaurante } from '../interface/restaurante';
-import { ModalController } from '@ionic/angular';
-import { NuevoRestauranteComponent } from '../componentes/nuevo-restaurante/nuevo-restaurante.component';
 
 
 import { addIcons } from 'ionicons';
 import { 
   star, sunny, cloudUploadOutline, restaurantOutline,
   closeCircleOutline, searchOutline, filterOutline, trashOutline,
-  // ✅ Añadidos: iconos que se usan en el HTML pero faltaban registrados
   globeOutline, warningOutline, informationCircleOutline,
-  downloadOutline, lockClosedOutline, addOutline
+  downloadOutline, lockClosedOutline
 } from 'ionicons/icons';
 
 @Component({
@@ -30,8 +27,7 @@ export class HomePage {
   firestore = inject(Firestore);
   alertCtrl = inject(AlertController);
   toastCtrl = inject(ToastController);
-  loadingCtrl    = inject(LoadingController);
-  modalCtrl = inject(ModalController);
+  loadingCtrl = inject(LoadingController);
   restaurantes: Restaurante[] = restaurantesJSON as Restaurante[];
 
   //signals para manejar el estado de la aplicación de forma reactiva y eficiente
@@ -50,7 +46,7 @@ export class HomePage {
       star, sunny, cloudUploadOutline, restaurantOutline,
       closeCircleOutline, searchOutline, filterOutline, trashOutline,
       globeOutline, warningOutline, informationCircleOutline, downloadOutline,
-      lockClosedOutline, addOutline
+      lockClosedOutline
     });
   }
 
@@ -77,23 +73,6 @@ export class HomePage {
     const localities = lista.map(r => r.locality?.trim()).filter((l): l is string => !!l);
     return Array.from(new Set(localities)).sort();
   });
-
-  async abrirFormulario() {
-    const modal = await this.modalCtrl.create({
-      component: NuevoRestauranteComponent,
-      componentProps: {
-        territorios: this.territoriosFiltrados(),
-        localidades: this.localidadesFiltradasPorTerritorio()
-      }
-    });
-
-    await modal.present();
-
-    const { data } = await modal.onDidDismiss();
-    if (data?.guardado) {
-      await this.cargarDatos();
-    }
-  }
 
   restaurantesFiltrados = computed(() => {
     let lista = this.restaurantesCargados();
@@ -167,10 +146,13 @@ export class HomePage {
     await toast.present();
   }
 
+
+
+
+
   async confirmarImportacion() {
     const alert = await this.alertCtrl.create({
       header: '⚠️ Confirmar actualización',
-      // ✅ H2 + H7: Lenguaje de usuario, número exacto de registros afectados
       message: `Esta acción borrará <strong>${this.restaurantes.length} restaurantes</strong>
                 actuales y los reemplazará con los datos del archivo local. ¿Deseas continuar?`,
       buttons: [
@@ -212,7 +194,6 @@ export class HomePage {
       await loading.dismiss();
       console.error('Error al importar JSON:', error);
       this.estadoImportacion.set('');
-      // ✅ H9: Mensaje específico según tipo de error
       const msg = error?.code === 'permission-denied'
         ? '❌ Sin permisos en Firebase. Revisa las reglas de seguridad.'
         : '❌ Error al actualizar. Revisa tu conexión a internet.';
