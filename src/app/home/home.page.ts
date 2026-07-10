@@ -1,18 +1,32 @@
+// ─────────────────────────────────────────────────────────────────────────────
+// IMPORTS — Angular core
+// ─────────────────────────────────────────────────────────────────────────────
 import { Component, signal, computed, inject } from '@angular/core';
-import restaurantesJSON from '../../assets/datos/restaurantes.json';
+
+// ─────────────────────────────────────────────────────────────────────────────
+// IMPORTS — Ionic: módulo de componentes UI y controladores de overlays
+// ─────────────────────────────────────────────────────────────────────────────
 import { IonicModule } from '@ionic/angular';
 import { AlertController, ToastController, LoadingController } from '@ionic/angular';
-import { Restaurante } from '../interface/restaurante';
-import { RestauranteService } from '../services/restaurante.service';
 
-
+// ─────────────────────────────────────────────────────────────────────────────
+// IMPORTS — Iconos de Ionicons
+// addIcons() registra los iconos para que sean usables en el HTML por nombre
+// ─────────────────────────────────────────────────────────────────────────────
 import { addIcons } from 'ionicons';
-import { 
+import {
   star, sunny, cloudUploadOutline, restaurantOutline,
   closeCircleOutline, searchOutline, filterOutline, trashOutline,
   globeOutline, warningOutline, informationCircleOutline,
   downloadOutline, lockClosedOutline
 } from 'ionicons/icons';
+
+// ─────────────────────────────────────────────────────────────────────────────
+// IMPORTS — Interfaz, servicio y datos locales del proyecto
+// ─────────────────────────────────────────────────────────────────────────────
+import { Restaurante } from '../interface/restaurante';
+import { RestauranteService } from '../services/restaurante.service';
+import restaurantesJSON from '../../assets/datos/restaurantes.json';
 
 @Component({
   selector: 'app-home',
@@ -23,47 +37,90 @@ import {
 })
 export class HomePage {
 
-  //Inject se usa para obtener instancias de servicios en componentes standalone sin necesidad de un constructor explícito
+  // ─────────────────────────────────────────────────────────────────────────
+  // INYECCIÓN DE DEPENDENCIAS
+  // inject() es la forma moderna de inyectar servicios en componentes standalone.
+  // Es equivalente a declararlos como parámetros en el constructor.
+  // ─────────────────────────────────────────────────────────────────────────
   restauranteService = inject(RestauranteService);
-  alertCtrl = inject(AlertController);
-  toastCtrl = inject(ToastController);
-  loadingCtrl = inject(LoadingController);
+  alertCtrl          = inject(AlertController);
+  toastCtrl          = inject(ToastController);
+  loadingCtrl        = inject(LoadingController);
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // DATOS LOCALES
+  // Restaurantes leídos directamente del JSON local (usados para la importación)
+  // ─────────────────────────────────────────────────────────────────────────
   restaurantes: Restaurante[] = restaurantesJSON as Restaurante[];
 
-  //signals para manejar el estado de la aplicación de forma reactiva y eficiente
+  // ─────────────────────────────────────────────────────────────────────────
+  // ESTADO — Signals
+  // Los signals son la forma reactiva de Angular para gestionar el estado.
+  // Cuando cambia el valor de un signal, la vista se actualiza automáticamente.
+  // Se leen llamándolos como función: signal()  |  Se actualizan con: signal.set(valor)
+  // ─────────────────────────────────────────────────────────────────────────
+
+  /** Lista de restaurantes obtenidos de Firebase */
   restaurantesCargados = signal<Restaurante[]>([]);
+
+  /** Texto introducido en la barra de búsqueda */
   textoBusqueda = signal('');
+
+  /** Territorio seleccionado en el selector de filtro */
   territorioSeleccionado = signal('');
+
+  /** Localidades seleccionadas para filtrar */
+  localidadesSeleccionadas = signal<string[]>([]);
+
+  /** Indica si se está realizando una carga de datos desde Firebase */
   cargando = signal(false);
+
+  /** Indica si se está realizando una importación del JSON local */
   importando = signal(false);
-  localidadesSeleccionadas = signal<Set<string>>(new Set());
+
+  /** Mensaje descriptivo del estado actual de la carga */
   estadoCarga = signal('');
+
+  /** Mensaje descriptivo del estado actual de la importación */
   estadoImportacion = signal('');
 
+  // ─────────────────────────────────────────────────────────────────────────
+  // CONSTRUCTOR
+  // Se ejecuta al instanciar el componente.
+  // Registramos aquí los iconos para que estén disponibles en el HTML.
+  // ─────────────────────────────────────────────────────────────────────────
   constructor() {
-    //Añadimos los iconos que vamos a usar en el HTML para que estén disponibles globalmente
     addIcons({
       star, sunny, cloudUploadOutline, restaurantOutline,
       closeCircleOutline, searchOutline, filterOutline, trashOutline,
-      globeOutline, warningOutline, informationCircleOutline, downloadOutline,
-      lockClosedOutline
+      globeOutline, warningOutline, informationCircleOutline,
+      downloadOutline, lockClosedOutline
     });
   }
 
-  //computed para derivar datos basados en el estado actual de los signals, evitando cálculos innecesarios y mejorando el rendimiento
+  // ─────────────────────────────────────────────────────────────────────────
+  // DATOS DERIVADOS — Computed
+  // computed() crea valores que se recalculan automáticamente solo cuando
+  // cambia alguno de los signals de los que dependen. Son de solo lectura.
+  // ─────────────────────────────────────────────────────────────────────────
+
+  /** True si hay al menos un restaurante cargado */
   hayDatos = computed(() => this.restaurantesCargados().length > 0);
 
+  /** True si hay algún filtro activo (texto, territorio o localidades) */
   hayFiltrosActivos = computed(() =>
     !!this.textoBusqueda() ||
     !!this.territorioSeleccionado() ||
-    this.localidadesSeleccionadas().size > 0
+    this.localidadesSeleccionadas().length > 0
   );
 
+  /** Territorios disponibles filtrados por los restaurantes cargados */
   territoriosFiltrados = computed(() => {
     const territorios = this.restaurantesCargados().map(r => r.territory);
     return Array.from(new Set(territorios)).sort();
   });
 
+  /** Localidades disponibles filtradas por el territorio seleccionado */
   localidadesFiltradasPorTerritorio = computed(() => {
     let lista = this.restaurantesCargados();
     const territorio = this.territorioSeleccionado().toLowerCase().trim();
@@ -74,6 +131,7 @@ export class HomePage {
     return Array.from(new Set(localities)).sort();
   });
 
+  /** Restaurantes resultantes tras aplicar todos los filtros activos */
   restaurantesFiltrados = computed(() => {
     let lista = this.restaurantesCargados();
 
@@ -88,68 +146,101 @@ export class HomePage {
     }
 
     const seleccionadas = this.localidadesSeleccionadas();
-    if (seleccionadas.size > 0) {
-      lista = lista.filter(r => seleccionadas.has(r.locality?.trim() || ''));
+    if (seleccionadas.length > 0) {
+      lista = lista.filter(r => seleccionadas.includes(r.locality?.trim() || ''));
     }
 
     return lista;
   });
 
+  // ─────────────────────────────────────────────────────────────────────────
+  // GETTERS
+  // Un getter expone un valor calculado como si fuera una propiedad normal.
+  // Se accede sin paréntesis desde el HTML: localidadesSeleccionadasArray
+  // ─────────────────────────────────────────────────────────────────────────
+
+  /** Devuelve las localidades seleccionadas como array para usarlo en el HTML */
   get localidadesSeleccionadasArray(): string[] {
-    return Array.from(this.localidadesSeleccionadas());
+    return this.localidadesSeleccionadas();
   }
 
-  onTerritorioChange(event: any) {
-    this.territorioSeleccionado.set(event.detail.value);
-    const nuevasLocalidades = new Set(
-      Array.from(this.localidadesSeleccionadas()).filter(loc =>
-        this.localidadesFiltradasPorTerritorio().includes(loc)
-      )
+  // ─────────────────────────────────────────────────────────────────────────
+  // MÉTODOS DE FILTRADO
+  // Responden a los eventos del usuario en los controles de filtro y
+  // actualizan los signals correspondientes.
+  // ─────────────────────────────────────────────────────────────────────────
+
+  /** Se ejecuta al cambiar el selector de territorio */
+  onTerritorioChange(value: string) {
+    this.territorioSeleccionado.set(value);
+    const nuevasLocalidades = this.localidadesSeleccionadas().filter(loc =>
+      this.localidadesFiltradasPorTerritorio().includes(loc)
     );
     this.localidadesSeleccionadas.set(nuevasLocalidades);
   }
 
-  onLocalidadesChange(event: any) {
-    this.localidadesSeleccionadas.set(new Set(event.detail.value));
+  /** Se ejecuta al cambiar el selector de localidades */
+  onLocalidadesChange(value: string[]) {
+    this.localidadesSeleccionadas.set(value);
   }
 
+  /** Elimina todas las localidades seleccionadas */
   limpiarLocalidades() {
-    this.localidadesSeleccionadas.set(new Set());
+    this.localidadesSeleccionadas.set([]);
   }
 
+  /** Elimina una localidad concreta del conjunto de seleccionadas */
   eliminarLocalidad(loc: string) {
-    const nuevas = new Set(this.localidadesSeleccionadas());
-    nuevas.delete(loc);
-    this.localidadesSeleccionadas.set(nuevas);
+    this.localidadesSeleccionadas.set(
+      this.localidadesSeleccionadas().filter(l => l !== loc)
+    );
   }
 
+  /** Restablece todos los filtros a su estado inicial */
   limpiarTodosFiltros() {
     this.textoBusqueda.set('');
     this.territorioSeleccionado.set('');
-    this.localidadesSeleccionadas.set(new Set());
+    this.localidadesSeleccionadas.set([]);
   }
 
+  /** Limpia el territorio solo si no hay localidades seleccionadas que dependan de él */
   limpiarTerritorio() {
-    if (this.localidadesSeleccionadas().size === 0) {
+    if (this.localidadesSeleccionadas().length === 0) {
       this.territorioSeleccionado.set('');
     }
   }
 
-  private async mostrarToast(mensaje: string, color: 'success' | 'danger' | 'warning') {
-    const toast = await this.toastCtrl.create({
-      message: mensaje,
-      duration: 3000,
-      color,
-      position: 'bottom',
-      buttons: [{ text: 'X', role: 'cancel' }]
-    });
-    await toast.present();
+  // ─────────────────────────────────────────────────────────────────────────
+  // MÉTODOS DE DATOS — Operaciones con Firebase (async/await)
+  // Son asíncronos porque las llamadas a Firebase devuelven Promises.
+  // Se usa try/catch/finally para gestionar errores y limpiar el estado.
+  // ─────────────────────────────────────────────────────────────────────────
+
+  /** Obtiene todos los restaurantes de Firebase y los guarda en el signal */
+  async cargarDatos() {
+    this.cargando.set(true);
+    this.estadoCarga.set('Cargando restaurantes...');
+
+    try {
+      const lista = await this.restauranteService.getAll();
+      this.restaurantesCargados.set(lista);
+      this.estadoCarga.set('');
+      await this.mostrarToast(`✅ ${lista.length} restaurantes cargados`, 'success');
+
+    } catch (error: any) {
+      console.error('Error al cargar datos:', error);
+      this.estadoCarga.set('');
+      const msg = error?.code === 'permission-denied'
+        ? '❌ Sin permisos en Firebase. Revisa las reglas de seguridad.'
+        : '❌ Error al cargar datos. Revisa tu conexión a internet.';
+      await this.mostrarToast(msg, 'danger');
+    } finally {
+      // finally siempre se ejecuta, haya error o no
+      this.cargando.set(false);
+    }
   }
 
-
-
-
-
+  /** Muestra un diálogo de confirmación antes de iniciar la importación */
   async confirmarImportacion() {
     const alert = await this.alertCtrl.create({
       header: '⚠️ Confirmar actualización',
@@ -163,6 +254,7 @@ export class HomePage {
     await alert.present();
   }
 
+  /** Borra todos los datos de Firebase y sube los restaurantes del JSON local */
   async importarJSON() {
     this.importando.set(true);
 
@@ -197,29 +289,7 @@ export class HomePage {
     }
   }
 
-  async cargarDatos() {
-    this.cargando.set(true);
-    this.estadoCarga.set('Cargando restaurantes...');
-
-    try {
-      const lista = await this.restauranteService.getAll();
-      this.restaurantesCargados.set(lista);
-      this.estadoCarga.set('');
-      await this.mostrarToast(`✅ ${lista.length} restaurantes cargados`, 'success');
-
-    } catch (error: any) {
-      console.error('Error al cargar datos:', error);
-      this.estadoCarga.set('');
-      // ✅ H9: Mensaje específico según tipo de error
-      const msg = error?.code === 'permission-denied'
-        ? '❌ Sin permisos en Firebase. Revisa las reglas de seguridad.'
-        : '❌ Error al cargar datos. Revisa tu conexión a internet.';
-      await this.mostrarToast(msg, 'danger');
-    } finally {
-      this.cargando.set(false);
-    }
-  }
-
+  /** Descarga todos los restaurantes de Firebase como fichero JSON */
   async exportarJSON() {
     const datos = await this.restauranteService.getAll();
     const blob = new Blob([JSON.stringify(datos, null, 2)], { type: 'application/json' });
@@ -230,11 +300,35 @@ export class HomePage {
     a.click();
   }
 
+  // ─────────────────────────────────────────────────────────────────────────
+  // MÉTODOS AUXILIARES — Notificaciones UI
+  // ─────────────────────────────────────────────────────────────────────────
+
+  /** Muestra un Toast (mensaje emergente breve) en la parte inferior de la pantalla */
+  private async mostrarToast(mensaje: string, color: 'success' | 'danger' | 'warning') {
+    const toast = await this.toastCtrl.create({
+      message: mensaje,
+      duration: 3000,
+      color,
+      position: 'bottom',
+      buttons: [{ text: 'X', role: 'cancel' }]
+    });
+    await toast.present();
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // MÉTODOS DE UTILIDAD — Transformaciones de datos para el HTML
+  // Array.from({ length: n }) crea un array de n elementos.
+  // Se usa para repetir iconos (estrellas/soles) con *ngFor en la vista.
+  // ─────────────────────────────────────────────────────────────────────────
+
+  /** Devuelve un array de n elementos para iterar n estrellas Michelin en el HTML */
   estrellasMichelin(r: Restaurante): number[] {
     const count = Number(r.michelinStar) || 0;
     return Array.from({ length: count }, (_, i) => i);
   }
 
+  /** Devuelve un array de n elementos para iterar n soles Repsol en el HTML */
   repsolSoles(r: Restaurante): number[] {
     const n = Number(r.repsolSun) || 0;
     return Array.from({ length: n }, (_, i) => i);

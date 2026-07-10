@@ -72,7 +72,7 @@
             placeholder="Buscar por nombre..."
             [value]="textoBusqueda()"
             [disabled]="!hayDatos()"
-            (ionInput)="textoBusqueda.set($any($event.target).value)">
+            (ionInput)="textoBusqueda.set($event.detail.value ?? '')">
           </ion-input>
         </ion-item>
       </ion-col>
@@ -85,7 +85,7 @@
             placeholder="Todos"
             [value]="territorioSeleccionado()"
             [disabled]="!hayDatos()"
-            (ionChange)="onTerritorioChange($event)">
+            (ionChange)="onTerritorioChange($event.detail.value)">
             @for (t of territoriosFiltrados(); track t) {
               <ion-select-option [value]="t">{{ t }}</ion-select-option>
             }
@@ -111,7 +111,7 @@
             multiple="true"
             [value]="localidadesSeleccionadasArray"
             [disabled]="!hayDatos()"
-            (ionChange)="onLocalidadesChange($event)">
+            (ionChange)="onLocalidadesChange($event.detail.value)">
             @for (loc of localidadesFiltradasPorTerritorio(); track loc) {
               <ion-select-option [value]="loc">{{ loc }}</ion-select-option>
             }
@@ -121,7 +121,7 @@
             slot="end"
             fill="clear"
             color="medium"
-            [disabled]="localidadesSeleccionadas().size === 0"
+            [disabled]="localidadesSeleccionadas().length === 0"
             (click)="limpiarLocalidades()">
             <ion-icon slot="icon-only" name="close-circle-outline"></ion-icon>
           </ion-button>
@@ -143,11 +143,11 @@
         </ion-chip>
       }
       @if (territorioSeleccionado()) {
-        <ion-chip [color]="localidadesSeleccionadas().size > 0 ? 'medium' : 'secondary'"
+        <ion-chip [color]="localidadesSeleccionadas().length > 0 ? 'medium' : 'secondary'"
           (click)="limpiarTerritorio()"
           [attr.aria-label]="'Eliminar filtro de territorio: ' + territorioSeleccionado()">
           <ion-label>Territorio: {{ territorioSeleccionado() }}</ion-label>
-          @if (localidadesSeleccionadas().size === 0) {
+          @if (localidadesSeleccionadas().length === 0) {
             <ion-icon name="close-circle-outline"></ion-icon>
           } @else {
             <ion-icon name="lock-closed-outline"></ion-icon>
