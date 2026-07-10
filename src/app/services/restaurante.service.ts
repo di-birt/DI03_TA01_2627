@@ -6,7 +6,7 @@ import { Restaurante } from '../interface/restaurante';
 export class RestauranteService {
 
   private firestore = inject(Firestore);
-  private readonly COLECCION = 'restaurantesColleccion';
+  private readonly COLECCION = 'restaurantesColeccion';
 
   // Obtiene todos los restaurantes de Firestore
   async getAll(): Promise<Restaurante[]> {

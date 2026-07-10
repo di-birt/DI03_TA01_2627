@@ -1,12 +1,16 @@
 
 export const environment = {
   production: false,
+  auth: {
+    email: 'mardanza@birt.eus',
+    password: 'Test1234',
+  },
   firebase : {
-    apiKey: "AIzaSyCURHz7nBMeuUMqAy5Zz9ORkJaFqE5wNFk",
-    authDomain: "dibbdd-1d46f.firebaseapp.com",
-    projectId: "dibbdd-1d46f",
-    storageBucket: "dibbdd-1d46f.firebasestorage.app",
-    messagingSenderId: "517767549438",
-    appId: "1:517767549438:web:b0793783b9cffb446130af"
+    apiKey: "AIzaSyBGXAMJMVhgfAUorRqBZLg9DXTjXF_3R5k",
+    authDomain: "di-bbdd-472ce.firebaseapp.com",
+    projectId: "di-bbdd-472ce",
+    storageBucket: "di-bbdd-472ce.firebasestorage.app",
+    messagingSenderId: "1053575576004",
+    appId: "1:1053575576004:web:033199ff777d04aaf40c91"
   }
 }
