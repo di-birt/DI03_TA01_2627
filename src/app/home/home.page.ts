@@ -7,7 +7,7 @@ import { Component, signal, computed, inject } from '@angular/core';
 // IMPORTS — Ionic: módulo de componentes UI y controladores de overlays
 // ─────────────────────────────────────────────────────────────────────────────
 import { IonicModule } from '@ionic/angular';
-import { AlertController, ToastController, LoadingController } from '@ionic/angular';
+import { AlertController, ToastController, LoadingController, ModalController } from '@ionic/angular';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // IMPORTS — Iconos de Ionicons
@@ -18,7 +18,7 @@ import {
   star, sunny, cloudUploadOutline, restaurantOutline,
   closeCircleOutline, searchOutline, filterOutline, trashOutline,
   globeOutline, warningOutline, informationCircleOutline,
-  downloadOutline, lockClosedOutline
+  downloadOutline, lockClosedOutline, addOutline
 } from 'ionicons/icons';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -26,6 +26,7 @@ import {
 // ─────────────────────────────────────────────────────────────────────────────
 import { Restaurante } from '../interface/restaurante';
 import { RestauranteService } from '../services/restaurante.service';
+import { AddRestauranteModalComponent } from '../components/add-restaurante-modal/add-restaurante-modal.component';
 import restaurantesJSON from '../../assets/datos/restaurantes.json';
 
 @Component({
@@ -46,6 +47,7 @@ export class HomePage {
   alertCtrl          = inject(AlertController);
   toastCtrl          = inject(ToastController);
   loadingCtrl        = inject(LoadingController);
+  modalCtrl          = inject(ModalController);
 
   // ─────────────────────────────────────────────────────────────────────────
   // DATOS LOCALES
@@ -94,7 +96,7 @@ export class HomePage {
       star, sunny, cloudUploadOutline, restaurantOutline,
       closeCircleOutline, searchOutline, filterOutline, trashOutline,
       globeOutline, warningOutline, informationCircleOutline,
-      downloadOutline, lockClosedOutline
+      downloadOutline, lockClosedOutline, addOutline
     });
   }
 
@@ -332,5 +334,50 @@ export class HomePage {
   repsolSoles(r: Restaurante): number[] {
     const n = Number(r.repsolSun) || 0;
     return Array.from({ length: n }, (_, i) => i);
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // MÉTODOS CRUD — Añadir y borrar restaurantes individuales
+  // ─────────────────────────────────────────────────────────────────────────
+
+  /** Abre el modal para añadir un restaurante nuevo */
+  async abrirModalAnadir() {
+    const modal = await this.modalCtrl.create({
+      component: AddRestauranteModalComponent,
+    });
+    await modal.present();
+    const { role } = await modal.onWillDismiss();
+    if (role === 'confirm') {
+      await this.cargarDatos();
+    }
+  }
+
+  /** Pide confirmación y borra el restaurante indicado de Firebase */
+  async borrarRestaurante(r: Restaurante) {
+    const alert = await this.alertCtrl.create({
+      header: 'Confirmar borrado',
+      subHeader: `¿Deseas borrar el restaurante ${r.documentName}?`,
+      message: 'Este proceso es irreversible',
+      buttons: [
+        { text: 'Cancelar', role: 'cancel' },
+        {
+          text: 'Borrar', role: 'confirm', cssClass: 'danger',
+          handler: async () => {
+            if (!r.id) {
+              await this.mostrarToast('No se puede borrar: el restaurante no tiene ID.', 'danger');
+              return;
+            }
+            try {
+              await this.restauranteService.delete(r.id);
+              this.restaurantesCargados.update(lista => lista.filter(x => x.id !== r.id));
+              this.mostrarToast(`${r.documentName} eliminado`, 'success');
+            } catch {
+              this.mostrarToast('Error al borrar el restaurante', 'danger');
+            }
+          }
+        }
+      ]
+    });
+    await alert.present();
   }
 }

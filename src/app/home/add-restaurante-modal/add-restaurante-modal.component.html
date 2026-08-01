@@ -1,0 +1,79 @@
+<ion-header>
+  <ion-toolbar>
+    <ion-title>Añadir restaurante</ion-title>
+    <ion-buttons slot="end">
+      <ion-button (click)="cancelar()">
+        <ion-icon slot="icon-only" name="close-outline"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="ion-padding">
+  <ion-list>
+    <ion-item>
+      <ion-input
+        label="Nombre *"
+        placeholder="Nombre del restaurante"
+        [(ngModel)]="nombre"
+        [clearInput]="true">
+      </ion-input>
+    </ion-item>
+    <ion-item>
+      <ion-input
+        label="Localidad"
+        placeholder="Localidad"
+        [(ngModel)]="localidad"
+        [clearInput]="true">
+      </ion-input>
+    </ion-item>
+    <ion-item>
+      <ion-input
+        label="Territorio"
+        placeholder="Territorio"
+        [(ngModel)]="territorio"
+        [clearInput]="true">
+      </ion-input>
+    </ion-item>
+    <ion-item>
+      <ion-input
+        label="Dirección"
+        placeholder="Dirección"
+        [(ngModel)]="direccion"
+        [clearInput]="true">
+      </ion-input>
+    </ion-item>
+    <ion-item>
+      <ion-input
+        label="Teléfono"
+        type="tel"
+        placeholder="Teléfono"
+        [(ngModel)]="telefono"
+        [clearInput]="true">
+      </ion-input>
+    </ion-item>
+    <ion-item>
+      <ion-input
+        label="Web"
+        type="url"
+        placeholder="https://..."
+        [(ngModel)]="web"
+        [clearInput]="true">
+      </ion-input>
+    </ion-item>
+  </ion-list>
+</ion-content>
+
+<ion-footer>
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-button color="medium" (click)="cancelar()">Cancelar</ion-button>
+    </ion-buttons>
+    <ion-buttons slot="end">
+      <ion-button color="primary" [disabled]="!nombre.trim()" (click)="confirmar()">
+        <ion-icon slot="start" name="add-outline"></ion-icon>
+        Añadir
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-footer>

@@ -8,10 +8,10 @@ export class RestauranteService {
   private firestore = inject(Firestore);
   private readonly COLECCION = 'restaurantesColeccion';
 
-  // Obtiene todos los restaurantes de Firestore
+  // Obtiene todos los restaurantes de Firestore (incluye el id del documento)
   async getAll(): Promise<Restaurante[]> {
     const snapshot = await getDocs(collection(this.firestore, this.COLECCION));
-    return snapshot.docs.map(d => d.data() as Restaurante);
+    return snapshot.docs.map(d => ({ id: d.id, ...d.data() } as Restaurante));
   }
 
   // Borra todos los documentos de la colección
@@ -28,5 +28,16 @@ export class RestauranteService {
     for (const r of restaurantes) {
       await addDoc(col, r);
     }
+  }
+
+  // Añade un único restaurante a la colección
+  async add(restaurante: Restaurante): Promise<void> {
+    const col = collection(this.firestore, this.COLECCION);
+    await addDoc(col, restaurante);
+  }
+
+  // Borra un restaurante por su id de documento
+  async delete(id: string): Promise<void> {
+    await deleteDoc(doc(this.firestore, this.COLECCION, id));
   }
 }

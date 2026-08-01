@@ -5,6 +5,12 @@
     <!-- ✅ H8: Añadidos botones más pequeños y con iconos para acciones de carga/importación -->
     <ion-buttons slot="end">
       <ion-button
+        (click)="abrirModalAnadir()"
+        [disabled]="cargando() || importando()"
+        title="Añadir un nuevo restaurante">
+        <ion-icon slot="icon-only" name="add-outline"></ion-icon>
+      </ion-button>
+      <ion-button
         (click)="confirmarImportacion()"
         [disabled]="importando()"
         title="Actualizar datos desde archivo local a Firebase">
@@ -187,12 +193,13 @@
     <ion-row class="tabla-header">
       <ion-col size="2">Nombre</ion-col>
       <ion-col size="1">Localidad</ion-col>
-      <ion-col size="3">Dirección</ion-col>
+      <ion-col size="2">Dirección</ion-col>
       <ion-col size="1">Teléfono</ion-col>
       <ion-col size="2">Territorio</ion-col>
       <ion-col size="1">Web</ion-col>
       <ion-col size="1">⭐ Michelin</ion-col>
       <ion-col size="1"><ion-icon name="sunny" color="danger"></ion-icon> Repsol</ion-col>
+      <ion-col size="1">Borrar</ion-col>
     </ion-row>
 
     <!-- Filas -->
@@ -200,7 +207,7 @@
       <ion-row class="tabla-fila">
         <ion-col size="2" class="col-nombre">{{ r.documentName }}</ion-col>
         <ion-col size="1">{{ r.locality }}</ion-col>
-        <ion-col size="3" class="col-direccion">{{ r.address }}</ion-col>
+        <ion-col size="2" class="col-direccion">{{ r.address }}</ion-col>
         <ion-col size="1" class="col-phone">{{ r.phone }}</ion-col>
         <ion-col size="2">{{ r.territory }}</ion-col>
         <ion-col size="1" class="center">
@@ -219,6 +226,11 @@
           @for (_ of repsolSoles(r); track $index) {
             <ion-icon name="sunny" color="danger"></ion-icon>
           }
+        </ion-col>
+        <ion-col size="1" class="center">
+          <ion-button fill="clear" color="danger" size="small" (click)="borrarRestaurante(r)">
+            <ion-icon slot="icon-only" name="trash-outline"></ion-icon>
+          </ion-button>
         </ion-col>
       </ion-row>
     }
