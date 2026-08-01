@@ -1,51 +1,61 @@
 <ion-header>
   <ion-toolbar>
     <ion-title>🍽️ Guía de Restaurantes Euskadi</ion-title>
-    <!-- ✅ H2: Botones admin en header como iconos, lenguaje de usuario no técnico -->
-    <!-- ✅ H8: Añadidos botones más pequeños y con iconos para acciones de carga/importación -->
+    <!-- H2: verbos cotidianos ("Cargar", "Actualizar", "Exportar") en lugar de términos técnicos como "getAll" o "Firebase" -->
+    <!-- H6: icono + texto visibles siempre → el usuario reconoce la acción directamente, sin recordarla ni hacer hover -->
+    <!-- H8: cuatro acciones agrupadas en el header, separadas del contenido principal -->
     <ion-buttons slot="end">
+      <!-- H3: abre un modal con botón Cancelar → el usuario puede arrepentirse sin consecuencias -->
+      <!-- H5: [disabled] mientras hay operación en curso → evita lanzar dos peticiones simultáneas -->
       <ion-button
         (click)="abrirModalAnadir()"
         [disabled]="cargando() || importando()"
         title="Añadir un nuevo restaurante">
-        <ion-icon slot="icon-only" name="add-outline"></ion-icon>
+        <ion-icon slot="start" name="add-outline"></ion-icon>
+        Añadir
       </ion-button>
+      <!-- H5: llama a confirmarImportacion() que exige confirmación antes de sobreescribir todos los datos -->
       <ion-button
         (click)="confirmarImportacion()"
         [disabled]="importando()"
-        title="Actualizar datos desde archivo local a Firebase">
-        <ion-icon slot="icon-only" name="cloud-upload-outline"></ion-icon>
+        title="Actualizar datos desde el archivo local al servidor">
+        <ion-icon slot="start" name="cloud-upload-outline"></ion-icon>
+        Actualizar
       </ion-button>
+      <!-- H1: [disabled] mientras cargando() → el botón mismo comunica que ya hay una operación activa -->
       <ion-button
         (click)="cargarDatos()"
         [disabled]="cargando() || importando()"
-        title="Cargar restaurantes desde Firebase">
-        <ion-icon slot="icon-only" name="restaurant-outline"></ion-icon>
+        title="Cargar restaurantes desde el servidor">
+        <ion-icon slot="start" name="restaurant-outline"></ion-icon>
+        Cargar
       </ion-button>
       <ion-button
         (click)="exportarJSON()"
         [disabled]="cargando() || importando()"
         title="Exportar datos a archivo local">
-        <ion-icon slot="icon-only" name="download-outline"></ion-icon>
+        <ion-icon slot="start" name="download-outline"></ion-icon>
+        Exportar
       </ion-button>
     </ion-buttons>
   </ion-toolbar>
 </ion-header>
 
 <ion-content class="ion-padding">
-  <!-- ✅ H10: Texto de ayuda contextual solo cuando no hay datos -->
+  <!-- H8: este bloque solo existe cuando !hayDatos() → cuando hay datos es ruido y desaparece -->
+  <!-- H10: guía de inicio con los nombres exactos de los botones para que el usuario los identifique visualmente -->
   @if (!hayDatos() && !cargando()) {
     <ion-item lines="none" color="light" style="border-radius: 8px;">
       <ion-icon slot="start" name="information-circle-outline" color="primary"></ion-icon>
       <ion-label class="ion-text-wrap">
-        Usa <ion-icon name="restaurant-outline"></ion-icon> <strong>Cargar</strong> para ver los datos,
-        <ion-icon name="cloud-upload-outline"></ion-icon> <strong>Actualizar</strong> para subir datos nuevos a Firebase,
-        o <ion-icon name="download-outline"></ion-icon> <strong>Exportar</strong> para guardar los datos en tu dispositivo.
+        Pulsa <strong>Cargar</strong> para ver los restaurantes,
+        <strong>Actualizar</strong> para subir datos nuevos al servidor,
+        o <strong>Exportar</strong> para guardar los datos en tu dispositivo.
       </ion-label>
     </ion-item>
   }
 
-  <!-- ✅ H1: Spinner con mensaje claro durante carga/importación -->
+  <!-- H1: spinner + texto dinámico (estadoCarga / estadoImportacion) → el usuario sabe que la app trabaja y qué está haciendo exactamente -->
   @if (cargando() || importando()) {
     <ion-item>
       <ion-spinner slot="start" name="crescent"></ion-spinner>
@@ -55,7 +65,8 @@
     </ion-item>
   }
 
-  <!-- ✅ H3: Limpiar todos los filtros, visible solo cuando hay filtros activos -->
+  <!-- H3: salida de emergencia global → el usuario vuelve al estado inicial sin necesidad de saber qué filtros tiene activos -->
+  <!-- H8: visible solo cuando hayFiltrosActivos() → no ocupa espacio ni distrae cuando no es necesario -->
   @if (hayFiltrosActivos()) {
     <ion-button
       expand="full"
@@ -70,7 +81,8 @@
   <ion-grid>
     <ion-row class="ion-align-items-center ion-justify-content-start">
 
-      <!-- ✅ H2 + H10: Buscador con icono descriptivo -->
+      <!-- H2: icono de lupa como metáfora universal de búsqueda; placeholder en lenguaje natural -->
+      <!-- H6: [disabled] cuando !hayDatos() → el control no genera expectativas cuando no tiene efecto -->
       <ion-col size="12" size-md="3">
         <ion-item>
           <ion-icon slot="start" name="search-outline"></ion-icon>
@@ -83,7 +95,7 @@
         </ion-item>
       </ion-col>
 
-      <!-- ✅ H4: Botón limpiar DENTRO del ion-item, mismo patrón en ambos selects -->
+      <!-- H4: mismo patrón visual y de comportamiento en territorio y localidades → el usuario aprende una vez y aplica a ambos -->
       <ion-col size="12" size-md="3">
         <ion-item>
           <ion-select
@@ -96,7 +108,8 @@
               <ion-select-option [value]="t">{{ t }}</ion-select-option>
             }
           </ion-select>
-          <!-- ✅ H4: Icono en lugar de texto "Limpiar", consistente con localidades -->
+          <!-- H4: close-circle-outline idéntico al de localidades → misma acción, mismo icono en ambos sitios -->
+          <!-- H3: [disabled] cuando !territorioSeleccionado() → el botón no existe funcionalmente si no hay nada que limpiar -->
           <ion-button
             slot="end"
             fill="clear"
@@ -108,7 +121,7 @@
         </ion-item>
       </ion-col>
 
-      <!-- ✅ H4: Mismo patrón que territorio -->
+      <!-- H4: mismo patrón que territorio → consistencia que reduce el tiempo de aprendizaje -->
       <ion-col size="12" size-md="4">
         <ion-item>
           <ion-select
@@ -122,7 +135,7 @@
               <ion-select-option [value]="loc">{{ loc }}</ion-select-option>
             }
           </ion-select>
-          <!-- ✅ H4: Icono en lugar de texto "Limpiar", consistente con territorio -->
+          <!-- H4: close-circle-outline consistente con territorio → misma acción, mismo icono -->
           <ion-button
             slot="end"
             fill="clear"
@@ -137,7 +150,8 @@
     </ion-row>
   </ion-grid>
 
-  <!-- ✅ H5: Chips de filtros activos con aria-label para reconocer sin recordar -->
+  <!-- H6: chips visibles con el valor exacto del filtro → el usuario VE qué tiene activo sin tener que recordarlo -->
+  <!-- H3: cada chip es clicable e individualmente eliminable → acceso directo a la acción de deshacer filtro por filtro -->
   @if (hayFiltrosActivos()) {
     <div style="display: flex; flex-wrap: wrap; gap: 8px; padding: 8px 0;">
       @if (textoBusqueda()) {
@@ -149,9 +163,13 @@
         </ion-chip>
       }
       @if (territorioSeleccionado()) {
+        <!-- H4: el icono cambia (X → candado) cuando el chip está bloqueado; el color también cambia (secondary → medium) para indicar estado diferente -->
+        <!-- H3: no se puede borrar el territorio mientras hay localidades activas → evita dejar los chips de localidad en un estado incoherente -->
+        <!-- H10: title dinámico explica por qué está bloqueado cuando el usuario hace hover -->
         <ion-chip [color]="localidadesSeleccionadas().length > 0 ? 'medium' : 'secondary'"
           (click)="limpiarTerritorio()"
-          [attr.aria-label]="'Eliminar filtro de territorio: ' + territorioSeleccionado()">
+          [attr.aria-label]="'Eliminar filtro de territorio: ' + territorioSeleccionado()"
+          [title]="localidadesSeleccionadas().length > 0 ? 'No se puede eliminar mientras haya localidades seleccionadas' : 'Eliminar filtro de territorio'">
           <ion-label>Territorio: {{ territorioSeleccionado() }}</ion-label>
           @if (localidadesSeleccionadas().length === 0) {
             <ion-icon name="close-circle-outline"></ion-icon>
@@ -171,7 +189,8 @@
     </div>
   }
 
-  <!-- ✅ H6: Contador ANTES de la tabla para verlo sin scroll -->
+  <!-- H6: "Mostrando X de Y" → el usuario ve el impacto de los filtros sin contar filas ni recordar el total original -->
+  <!-- H1: se recalcula automáticamente en tiempo real gracias al computed restaurantesFiltrados() -->
   @if (hayDatos()) {
     <ion-item lines="none">
       <ion-icon slot="start" name="filter-outline"></ion-icon>
@@ -185,20 +204,46 @@
     </ion-item>
   }
 
-  <!-- ✅ H8: Tabla con columnas ajustadas, iconos para web y premios, y diseño responsive -->
+  <!-- H7: encabezados clicables para reordenar → el usuario experto localiza registros sin usar los filtros de texto -->
+  <!-- H8: solo las columnas de datos clave; iconos de estrella/sol en lugar de números para Michelin y Repsol -->
   @if (restaurantesFiltrados().length > 0) {
   <ion-grid class="tabla-grid">
 
     <!-- Cabecera -->
     <ion-row class="tabla-header">
-      <ion-col size="2">Nombre</ion-col>
-      <ion-col size="1">Localidad</ion-col>
+      <ion-col size="2" class="col-sortable" (click)="cambiarOrden('documentName')">
+        Nombre
+        @if (sortColumna() === 'documentName') {
+          <ion-icon [name]="sortDireccion() === 'asc' ? 'arrow-up-outline' : 'arrow-down-outline'"></ion-icon>
+        }
+      </ion-col>
+      <ion-col size="1" class="col-sortable" (click)="cambiarOrden('locality')">
+        Localidad
+        @if (sortColumna() === 'locality') {
+          <ion-icon [name]="sortDireccion() === 'asc' ? 'arrow-up-outline' : 'arrow-down-outline'"></ion-icon>
+        }
+      </ion-col>
       <ion-col size="2">Dirección</ion-col>
       <ion-col size="1">Teléfono</ion-col>
-      <ion-col size="2">Territorio</ion-col>
+      <ion-col size="2" class="col-sortable" (click)="cambiarOrden('territory')">
+        Territorio
+        @if (sortColumna() === 'territory') {
+          <ion-icon [name]="sortDireccion() === 'asc' ? 'arrow-up-outline' : 'arrow-down-outline'"></ion-icon>
+        }
+      </ion-col>
       <ion-col size="1">Web</ion-col>
-      <ion-col size="1">⭐ Michelin</ion-col>
-      <ion-col size="1"><ion-icon name="sunny" color="danger"></ion-icon> Repsol</ion-col>
+      <ion-col size="1" class="col-sortable" (click)="cambiarOrden('michelinStar')">
+        ⭐ Michelin
+        @if (sortColumna() === 'michelinStar') {
+          <ion-icon [name]="sortDireccion() === 'asc' ? 'arrow-up-outline' : 'arrow-down-outline'"></ion-icon>
+        }
+      </ion-col>
+      <ion-col size="1" class="col-sortable" (click)="cambiarOrden('repsolSun')">
+        <ion-icon name="sunny" color="danger"></ion-icon> Repsol
+        @if (sortColumna() === 'repsolSun') {
+          <ion-icon [name]="sortDireccion() === 'asc' ? 'arrow-up-outline' : 'arrow-down-outline'"></ion-icon>
+        }
+      </ion-col>
       <ion-col size="1">Borrar</ion-col>
     </ion-row>
 
@@ -227,6 +272,8 @@
             <ion-icon name="sunny" color="danger"></ion-icon>
           }
         </ion-col>
+        <!-- H3: borrarRestaurante() pide confirmación (alert) y ofrece Deshacer (toast 6s) → dos oportunidades de rectificar -->
+        <!-- H5: la acción destructiva requiere dos pasos obligatorios antes de ejecutarse en Firebase -->
         <ion-col size="1" class="center">
           <ion-button fill="clear" color="danger" size="small" (click)="borrarRestaurante(r)">
             <ion-icon slot="icon-only" name="trash-outline"></ion-icon>
@@ -238,7 +285,8 @@
   </ion-grid>
 } @else {
     @if (hayDatos()) {
-      <!-- ✅ H9: Mensaje claro con acción directa cuando no hay resultados -->
+      <!-- H9: indica QUÉ pasó ("sin coincidencias") y ofrece la SOLUCIÓN directa con un enlace clicable -->
+      <!-- H8: visible solo cuando hayDatos() pero restaurantesFiltrados() está vacío → no aparece en el estado inicial -->
       <ion-item lines="none" color="warning" style="margin-top: 16px; border-radius: 8px;">
         <ion-icon slot="start" name="warning-outline"></ion-icon>
         <ion-label class="ion-text-wrap">

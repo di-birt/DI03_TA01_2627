@@ -26,8 +26,8 @@ export class AddRestauranteModalComponent {
     address:      [''],
     phone:        [''],
     web:          [''],
-    michelinStar: ['0'],
-    repsolSun:    ['0'],
+    michelinStar: ['0', [Validators.min(0), Validators.max(3)]],
+    repsolSun:    ['0', [Validators.min(0), Validators.max(3)]],
   });
 
   cancelar() {

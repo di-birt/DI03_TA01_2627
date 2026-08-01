@@ -18,7 +18,7 @@ import {
   star, sunny, cloudUploadOutline, restaurantOutline,
   closeCircleOutline, searchOutline, filterOutline, trashOutline,
   globeOutline, warningOutline, informationCircleOutline,
-  downloadOutline, lockClosedOutline, addOutline
+  downloadOutline, lockClosedOutline, addOutline, arrowUpOutline, arrowDownOutline
 } from 'ionicons/icons';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -74,10 +74,10 @@ export class HomePage {
   /** Localidades seleccionadas para filtrar */
   localidadesSeleccionadas = signal<string[]>([]);
 
-  /** Indica si se está realizando una carga de datos desde Firebase */
+  /** H1: bloquea todos los botones mientras hay una petición activa a Firebase */
   cargando = signal(false);
 
-  /** Indica si se está realizando una importación del JSON local */
+  /** H1: bloquea botones y muestra overlay LoadingController durante la importación masiva */
   importando = signal(false);
 
   /** Mensaje descriptivo del estado actual de la carga */
@@ -85,6 +85,10 @@ export class HomePage {
 
   /** Mensaje descriptivo del estado actual de la importación */
   estadoImportacion = signal('');
+
+  /** H7: columna y dirección de ordenación activa; los cambios se propagan automáticamente a restaurantesFiltrados */
+  sortColumna = signal<string>('');
+  sortDireccion = signal<'asc' | 'desc'>('asc');
 
   // ─────────────────────────────────────────────────────────────────────────
   // CONSTRUCTOR
@@ -96,7 +100,7 @@ export class HomePage {
       star, sunny, cloudUploadOutline, restaurantOutline,
       closeCircleOutline, searchOutline, filterOutline, trashOutline,
       globeOutline, warningOutline, informationCircleOutline,
-      downloadOutline, lockClosedOutline, addOutline
+      downloadOutline, lockClosedOutline, addOutline, arrowUpOutline, arrowDownOutline
     });
   }
 
@@ -150,6 +154,18 @@ export class HomePage {
     const seleccionadas = this.localidadesSeleccionadas();
     if (seleccionadas.length > 0) {
       lista = lista.filter(r => seleccionadas.includes(r.locality?.trim() || ''));
+    }
+
+    const col = this.sortColumna();
+    if (col) {
+      const dir = this.sortDireccion() === 'asc' ? 1 : -1;
+      lista = [...lista].sort((a, b) => {
+        const va = String((a as any)[col] ?? '').toLowerCase();
+        const vb = String((b as any)[col] ?? '').toLowerCase();
+        if (va < vb) return -dir;
+        if (va > vb) return dir;
+        return 0;
+      });
     }
 
     return lista;
@@ -209,6 +225,16 @@ export class HomePage {
   limpiarTerritorio() {
     if (this.localidadesSeleccionadas().length === 0) {
       this.territorioSeleccionado.set('');
+    }
+  }
+
+  /** Alterna columna y dirección de ordenación al pulsar un encabezado de tabla */
+  cambiarOrden(columna: string) {
+    if (this.sortColumna() === columna) {
+      this.sortDireccion.set(this.sortDireccion() === 'asc' ? 'desc' : 'asc');
+    } else {
+      this.sortColumna.set(columna);
+      this.sortDireccion.set('asc');
     }
   }
 
@@ -306,14 +332,38 @@ export class HomePage {
   // MÉTODOS AUXILIARES — Notificaciones UI
   // ─────────────────────────────────────────────────────────────────────────
 
-  /** Muestra un Toast (mensaje emergente breve) en la parte inferior de la pantalla */
+  /** H9: errores y avisos usan duration:0 (no desaparecen solos); éxitos desaparecen a los 3s */
   private async mostrarToast(mensaje: string, color: 'success' | 'danger' | 'warning') {
     const toast = await this.toastCtrl.create({
       message: mensaje,
-      duration: 3000,
+      duration: color === 'success' ? 3000 : 0,
       color,
       position: 'bottom',
       buttons: [{ text: 'X', role: 'cancel' }]
+    });
+    await toast.present();
+  }
+
+  /** H3: permite recuperar un restaurante borrado por error durante 6 segundos */
+  private async mostrarToastConDeshacer(r: Restaurante) {
+    const toast = await this.toastCtrl.create({
+      message: `${r.documentName} eliminado`,
+      duration: 6000,
+      color: 'success',
+      position: 'bottom',
+      buttons: [
+        {
+          text: 'Deshacer',
+          handler: async () => {
+            try {
+              await this.restauranteService.add(r);
+              await this.cargarDatos();
+            } catch {
+              await this.mostrarToast('Error al deshacer el borrado. Revisa tu conexión.', 'danger');
+            }
+          }
+        }
+      ]
     });
     await toast.present();
   }
@@ -367,12 +417,16 @@ export class HomePage {
               await this.mostrarToast('No se puede borrar: el restaurante no tiene ID.', 'danger');
               return;
             }
+            const loading = await this.loadingCtrl.create({ message: 'Borrando restaurante...' });
+            await loading.present();
             try {
               await this.restauranteService.delete(r.id);
               this.restaurantesCargados.update(lista => lista.filter(x => x.id !== r.id));
-              this.mostrarToast(`${r.documentName} eliminado`, 'success');
+              await loading.dismiss();
+              await this.mostrarToastConDeshacer(r);
             } catch {
-              this.mostrarToast('Error al borrar el restaurante', 'danger');
+              await loading.dismiss();
+              this.mostrarToast('Error al borrar el restaurante. Revisa tu conexión.', 'danger');
             }
           }
         }
