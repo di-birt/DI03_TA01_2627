@@ -18,7 +18,8 @@ import {
   star, sunny, cloudUploadOutline, restaurantOutline,
   closeCircleOutline, searchOutline, filterOutline, trashOutline,
   globeOutline, warningOutline, informationCircleOutline,
-  downloadOutline, lockClosedOutline, addOutline, arrowUpOutline, arrowDownOutline
+  downloadOutline, lockClosedOutline, addOutline, arrowUpOutline, arrowDownOutline,
+  barChartOutline, listOutline
 } from 'ionicons/icons';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -27,12 +28,13 @@ import {
 import { Restaurante } from '../interface/restaurante';
 import { RestauranteService } from '../services/restaurante.service';
 import { AddRestauranteModalComponent } from '../components/add-restaurante-modal/add-restaurante-modal.component';
+import { GraficosComponent } from '../components/graficos/graficos.component';
 import restaurantesJSON from '../../assets/datos/restaurantes.json';
 
 @Component({
   selector: 'app-home',
   standalone: true,
-  imports: [IonicModule],
+  imports: [IonicModule, GraficosComponent],
   templateUrl: 'home.page.html',
   styleUrls: ['home.page.scss']
 })
@@ -68,8 +70,8 @@ export class HomePage {
   /** Texto introducido en la barra de búsqueda */
   textoBusqueda = signal('');
 
-  /** Territorio seleccionado en el selector de filtro */
-  territorioSeleccionado = signal('');
+  /** Territorios seleccionados en el selector de filtro */
+  territoriosSeleccionados = signal<string[]>([]);
 
   /** Localidades seleccionadas para filtrar */
   localidadesSeleccionadas = signal<string[]>([]);
@@ -90,6 +92,9 @@ export class HomePage {
   sortColumna = signal<string>('');
   sortDireccion = signal<'asc' | 'desc'>('asc');
 
+  /** Vista activa del segment: tabla o gráficos */
+  vistaActual = signal<'tabla' | 'graficos'>('tabla');
+
   // ─────────────────────────────────────────────────────────────────────────
   // CONSTRUCTOR
   // Se ejecuta al instanciar el componente.
@@ -100,7 +105,8 @@ export class HomePage {
       star, sunny, cloudUploadOutline, restaurantOutline,
       closeCircleOutline, searchOutline, filterOutline, trashOutline,
       globeOutline, warningOutline, informationCircleOutline,
-      downloadOutline, lockClosedOutline, addOutline, arrowUpOutline, arrowDownOutline
+      downloadOutline, lockClosedOutline, addOutline, arrowUpOutline, arrowDownOutline,
+      barChartOutline, listOutline
     });
   }
 
@@ -116,7 +122,7 @@ export class HomePage {
   /** True si hay algún filtro activo (texto, territorio o localidades) */
   hayFiltrosActivos = computed(() =>
     !!this.textoBusqueda() ||
-    !!this.territorioSeleccionado() ||
+    this.territoriosSeleccionados().length > 0 ||
     this.localidadesSeleccionadas().length > 0
   );
 
@@ -129,9 +135,9 @@ export class HomePage {
   /** Localidades disponibles filtradas por el territorio seleccionado */
   localidadesFiltradasPorTerritorio = computed(() => {
     let lista = this.restaurantesCargados();
-    const territorio = this.territorioSeleccionado().toLowerCase().trim();
-    if (territorio) {
-      lista = lista.filter(r => r.territory?.toLowerCase().trim() === territorio);
+    const territorios = this.territoriosSeleccionados().map(t => t.toLowerCase().trim());
+    if (territorios.length > 0) {
+      lista = lista.filter(r => territorios.includes(r.territory?.toLowerCase().trim() ?? ''));
     }
     const localities = lista.map(r => r.locality?.trim()).filter((l): l is string => !!l);
     return Array.from(new Set(localities)).sort();
@@ -146,9 +152,9 @@ export class HomePage {
       lista = lista.filter(r => r.documentName.toLowerCase().includes(texto));
     }
 
-    const territorio = this.territorioSeleccionado().toLowerCase().trim();
-    if (territorio) {
-      lista = lista.filter(r => r.territory.toLowerCase().trim() === territorio);
+    const territorios = this.territoriosSeleccionados().map(t => t.toLowerCase().trim());
+    if (territorios.length > 0) {
+      lista = lista.filter(r => territorios.includes(r.territory?.toLowerCase().trim() ?? ''));
     }
 
     const seleccionadas = this.localidadesSeleccionadas();
@@ -189,8 +195,8 @@ export class HomePage {
   // ─────────────────────────────────────────────────────────────────────────
 
   /** Se ejecuta al cambiar el selector de territorio */
-  onTerritorioChange(value: string) {
-    this.territorioSeleccionado.set(value);
+  onTerritorioChange(value: string[]) {
+    this.territoriosSeleccionados.set(value ?? []);
     const nuevasLocalidades = this.localidadesSeleccionadas().filter(loc =>
       this.localidadesFiltradasPorTerritorio().includes(loc)
     );
@@ -217,15 +223,21 @@ export class HomePage {
   /** Restablece todos los filtros a su estado inicial */
   limpiarTodosFiltros() {
     this.textoBusqueda.set('');
-    this.territorioSeleccionado.set('');
+    this.territoriosSeleccionados.set([]);
     this.localidadesSeleccionadas.set([]);
   }
 
-  /** Limpia el territorio solo si no hay localidades seleccionadas que dependan de él */
-  limpiarTerritorio() {
-    if (this.localidadesSeleccionadas().length === 0) {
-      this.territorioSeleccionado.set('');
-    }
+  limpiarTerritorios() {
+    this.territoriosSeleccionados.set([]);
+    this.localidadesSeleccionadas.set([]);
+  }
+
+  eliminarTerritorio(t: string) {
+    this.territoriosSeleccionados.update(arr => arr.filter(x => x !== t));
+    const validas = this.localidadesFiltradasPorTerritorio();
+    this.localidadesSeleccionadas.set(
+      this.localidadesSeleccionadas().filter(loc => validas.includes(loc))
+    );
   }
 
   /** Alterna columna y dirección de ordenación al pulsar un encabezado de tabla */
@@ -235,6 +247,12 @@ export class HomePage {
     } else {
       this.sortColumna.set(columna);
       this.sortDireccion.set('asc');
+    }
+  }
+
+  cambiarVista(valor: any) {
+    if (valor === 'tabla' || valor === 'graficos') {
+      this.vistaActual.set(valor);
     }
   }
 

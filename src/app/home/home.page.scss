@@ -71,6 +71,22 @@
   }
 }
 
+.vista-segment {
+  margin: 12px 0 8px;
+  border-radius: 10px;
+
+  ion-segment-button {
+    --border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+
+    ion-icon {
+      margin-right: 6px;
+      font-size: 16px;
+    }
+  }
+}
+
 .web-link {
   display: inline-flex;
   align-items: center;

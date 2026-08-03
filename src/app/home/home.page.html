@@ -65,6 +65,19 @@
     </ion-item>
   }
 
+  @if (hayDatos()) {
+    <ion-segment class="vista-segment" [value]="vistaActual()" (ionChange)="cambiarVista($event.detail.value)">
+      <ion-segment-button value="tabla">
+        <ion-icon name="list-outline"></ion-icon>
+        <ion-label>Tabla</ion-label>
+      </ion-segment-button>
+      <ion-segment-button value="graficos">
+        <ion-icon name="bar-chart-outline"></ion-icon>
+        <ion-label>Gráficos</ion-label>
+      </ion-segment-button>
+    </ion-segment>
+  }
+
   <!-- H3: salida de emergencia global → el usuario vuelve al estado inicial sin necesidad de saber qué filtros tiene activos -->
   <!-- H8: visible solo cuando hayFiltrosActivos() → no ocupa espacio ni distrae cuando no es necesario -->
   @if (hayFiltrosActivos()) {
@@ -101,21 +114,20 @@
           <ion-select
             label="Territorio"
             placeholder="Todos"
-            [value]="territorioSeleccionado()"
+            multiple="true"
+            [value]="territoriosSeleccionados()"
             [disabled]="!hayDatos()"
             (ionChange)="onTerritorioChange($event.detail.value)">
             @for (t of territoriosFiltrados(); track t) {
               <ion-select-option [value]="t">{{ t }}</ion-select-option>
             }
           </ion-select>
-          <!-- H4: close-circle-outline idéntico al de localidades → misma acción, mismo icono en ambos sitios -->
-          <!-- H3: [disabled] cuando !territorioSeleccionado() → el botón no existe funcionalmente si no hay nada que limpiar -->
           <ion-button
             slot="end"
             fill="clear"
             color="medium"
-            [disabled]="!territorioSeleccionado()"
-            (click)="territorioSeleccionado.set('')">
+            [disabled]="territoriosSeleccionados().length === 0"
+            (click)="limpiarTerritorios()">
             <ion-icon slot="icon-only" name="close-circle-outline"></ion-icon>
           </ion-button>
         </ion-item>
@@ -162,20 +174,12 @@
           <ion-icon name="close-circle-outline"></ion-icon>
         </ion-chip>
       }
-      @if (territorioSeleccionado()) {
-        <!-- H4: el icono cambia (X → candado) cuando el chip está bloqueado; el color también cambia (secondary → medium) para indicar estado diferente -->
-        <!-- H3: no se puede borrar el territorio mientras hay localidades activas → evita dejar los chips de localidad en un estado incoherente -->
-        <!-- H10: title dinámico explica por qué está bloqueado cuando el usuario hace hover -->
-        <ion-chip [color]="localidadesSeleccionadas().length > 0 ? 'medium' : 'secondary'"
-          (click)="limpiarTerritorio()"
-          [attr.aria-label]="'Eliminar filtro de territorio: ' + territorioSeleccionado()"
-          [title]="localidadesSeleccionadas().length > 0 ? 'No se puede eliminar mientras haya localidades seleccionadas' : 'Eliminar filtro de territorio'">
-          <ion-label>Territorio: {{ territorioSeleccionado() }}</ion-label>
-          @if (localidadesSeleccionadas().length === 0) {
-            <ion-icon name="close-circle-outline"></ion-icon>
-          } @else {
-            <ion-icon name="lock-closed-outline"></ion-icon>
-          }
+      @for (t of territoriosSeleccionados(); track t) {
+        <ion-chip color="secondary"
+          (click)="eliminarTerritorio(t)"
+          [attr.aria-label]="'Eliminar filtro de territorio: ' + t">
+          <ion-label>Territorio: {{ t }}</ion-label>
+          <ion-icon name="close-circle-outline"></ion-icon>
         </ion-chip>
       }
       @for (loc of localidadesSeleccionadasArray; track loc) {
@@ -206,7 +210,8 @@
 
   <!-- H7: encabezados clicables para reordenar → el usuario experto localiza registros sin usar los filtros de texto -->
   <!-- H8: solo las columnas de datos clave; iconos de estrella/sol en lugar de números para Michelin y Repsol -->
-  @if (restaurantesFiltrados().length > 0) {
+  @if (vistaActual() === 'tabla') {
+    @if (restaurantesFiltrados().length > 0) {
   <ion-grid class="tabla-grid">
 
     <!-- Cabecera -->
@@ -298,6 +303,11 @@
         </ion-label>
       </ion-item>
     }
+  }
+}
+
+  @if (vistaActual() === 'graficos') {
+    <app-graficos [restaurantes]="restaurantesFiltrados()"></app-graficos>
   }
 
 </ion-content>
