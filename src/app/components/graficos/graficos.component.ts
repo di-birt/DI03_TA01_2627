@@ -69,7 +69,8 @@ export class GraficosComponent implements OnDestroy {
   // del navegador, que es lo que Chart.js necesita para dibujar.
   // *************************************************************************
   private canvasTerritorios = viewChild<ElementRef<HTMLCanvasElement>>('canvasTerritorios');
-  private canvasMichelin    = viewChild<ElementRef<HTMLCanvasElement>>('canvasMichelin');
+  private canvasLinea       = viewChild<ElementRef<HTMLCanvasElement>>('canvasLinea');
+  private canvasTipos       = viewChild<ElementRef<HTMLCanvasElement>>('canvasTipos');
   private canvasLocalidades = viewChild<ElementRef<HTMLCanvasElement>>('canvasLocalidades');
 
   // *************************************************************************
@@ -116,16 +117,16 @@ export class GraficosComponent implements OnDestroy {
     effect(() => {
       const data = this.restaurantes();
       const cT   = this.canvasTerritorios();
-      const cM   = this.canvasMichelin();
-      const cL   = this.canvasLocalidades();
+      const cL   = this.canvasLinea();
+      const cTi  = this.canvasTipos();
+      const cD   = this.canvasLocalidades();
 
-      // Guard: salimos si el DOM todavía no tiene los canvas listos
-      if (!cT || !cM || !cL) return;
+      if (!cT || !cL || !cTi || !cD) return;
 
-      // nativeElement extrae el HTMLCanvasElement del wrapper de Angular
       this.renderTerritorios(data, cT.nativeElement);
-      this.renderMichelin(data, cM.nativeElement);
-      this.renderLocalidades(data, cL.nativeElement);
+      this.renderLinea(data, cL.nativeElement);
+      this.renderTipoRestaurante(data, cTi.nativeElement);
+      this.renderLocalidades(data, cD.nativeElement);
     });
   }
 
@@ -226,47 +227,115 @@ export class GraficosComponent implements OnDestroy {
     }));
   }
 
-  // *************************************************************************
-  // GRÁFICO 2 — Barras horizontales: distinciones gastronómicas
-  //
-  // TIPO: 'bar' con indexAxis: 'y' (gira 90° → barras horizontales)
-  //   · Por defecto 'bar' dibuja barras verticales (eje de categorías en X).
-  //   · Con indexAxis: 'y' el eje de categorías pasa al Y → barras horizontales.
-  //   · Las escalas también se invierten: los valores numéricos van en X
-  //     y las etiquetas en Y.
-  //
-  // CONTEOS NO EXCLUSIVOS (se solapan a propósito):
-  //   Un restaurante CON AMBAS distinciones se cuenta en las 3 barras.
-  //   Esto responde a "¿cuántos tienen Repsol?" / "¿cuántos tienen Michelin?"
-  //   independientemente de si también tienen la otra.
-  //
-  // NOTA SOBRE ESTE DATASET:
-  //   En los datos actuales ningún restaurante tiene SOLO Michelin (todos los
-  //   que tienen Michelin también tienen Repsol), de ahí que la barra Michelin
-  //   y la barra "Ambas" tengan el mismo valor.
-  // *************************************************************************
-  private renderMichelin(data: Restaurante[], canvas: HTMLCanvasElement) {
-    this.destroyChart('michelin');
+  // Gráfico 2 — Line chart: total de estrellas Michelin y soles Repsol por territorio
+  private renderLinea(data: Restaurante[], canvas: HTMLCanvasElement) {
+    this.destroyChart('linea');
 
-    const conRepsol   = data.filter(r => Number(r.repsolSun)   > 0).length;
-    const conMichelin = data.filter(r => Number(r.michelinStar) > 0).length;
-    const conAmbas    = data.filter(r => Number(r.repsolSun) > 0 && Number(r.michelinStar) > 0).length;
+    const mapa = new Map<string, { michelin: number; repsol: number }>();
+    data.forEach(r => {
+      const t = r.territory?.trim() || 'Desconocido';
+      const e = mapa.get(t) ?? { michelin: 0, repsol: 0 };
+      e.michelin += Number(r.michelinStar) || 0;
+      e.repsol   += Number(r.repsolSun)   || 0;
+      mapa.set(t, e);
+    });
 
-    this.charts.set('michelin', new Chart(canvas, {
+    // Solo territorios con al menos una distinción
+    const entries = [...mapa.entries()]
+      .filter(([, v]) => v.michelin > 0 || v.repsol > 0)
+      .sort((a, b) => a[0].localeCompare(b[0]));
+
+    const labels   = entries.map(([k]) => k);
+    const michelin = entries.map(([, v]) => v.michelin);
+    const repsol   = entries.map(([, v]) => v.repsol);
+
+    this.charts.set('linea', new Chart(canvas, {
+      type: 'line',
+      data: {
+        labels,
+        datasets: [
+          {
+            label: '⭐ Estrellas Michelin',
+            data: michelin,
+            borderColor: '#eb445a',
+            backgroundColor: '#eb445a22',
+            fill: true,
+            tension: 0.4,
+            pointRadius: 5,
+            pointHoverRadius: 7,
+          },
+          {
+            label: '☀️ Soles Repsol',
+            data: repsol,
+            borderColor: '#ffc409',
+            backgroundColor: '#ffc40922',
+            fill: true,
+            tension: 0.4,
+            pointRadius: 5,
+            pointHoverRadius: 7,
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: true, position: 'top', labels: { color: '#333', usePointStyle: true } },
+          title: {
+            display: true,
+            text: 'Distinciones gastronómicas por territorio',
+            font: { size: 15, weight: 'bold' },
+            color: '#333',
+            padding: { bottom: 14 }
+          },
+          tooltip: {
+            callbacks: {
+              label: ctx => ` ${ctx.dataset.label}: ${ctx.parsed.y}`
+            }
+          }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: { stepSize: 1, color: '#555' },
+            grid: { color: 'rgba(0,0,0,0.06)' }
+          },
+          x: {
+            ticks: { color: '#555' },
+            grid: { display: false }
+          }
+        }
+      }
+    }));
+  }
+
+  // Gráfico 3 — Barras horizontales: restaurantes por tipo de establecimiento
+  private renderTipoRestaurante(data: Restaurante[], canvas: HTMLCanvasElement) {
+    this.destroyChart('tipos');
+
+    const counts = new Map<string, number>();
+    data.forEach(r => {
+      const tipo = r.restorationType?.trim() || 'Desconocido';
+      counts.set(tipo, (counts.get(tipo) ?? 0) + 1);
+    });
+
+    const sorted = [...counts.entries()].sort((a, b) => b[1] - a[1]);
+    const COLORS = ['#3880ff', '#2dd36f', '#eb445a', '#ffc409', '#5260ff', '#0cd1e8', '#f7a34b', '#a855f7', '#10dc60', '#92949c'];
+
+    this.charts.set('tipos', new Chart(canvas, {
       type: 'bar',
       data: {
-        labels: ['☀️ Soles Repsol', '⭐ Estrellas Michelin', '⭐☀️ Ambas distinciones'],
+        labels: sorted.map(([k]) => k),
         datasets: [{
           label: 'Restaurantes',
-          data: [conRepsol, conMichelin, conAmbas],
-          backgroundColor: ['#eb445abb', '#ffc409bb', '#5260ffbb'],
-          borderColor:     ['#eb445a',   '#ffc409',   '#5260ff'],
+          data: sorted.map(([, v]) => v),
+          backgroundColor: sorted.map((_, i) => COLORS[i % COLORS.length] + 'bb'),
+          borderColor:     sorted.map((_, i) => COLORS[i % COLORS.length]),
           borderWidth: 2,
           borderRadius: 6,
         }]
       },
       options: {
-        // indexAxis: 'y' es la única diferencia con un gráfico de barras vertical
         indexAxis: 'y',
         responsive: true,
         maintainAspectRatio: false,
@@ -274,26 +343,23 @@ export class GraficosComponent implements OnDestroy {
           legend: { display: false },
           title: {
             display: true,
-            text: 'Distinciones gastronómicas',
+            text: 'Restaurantes por tipo de establecimiento',
             font: { size: 15, weight: 'bold' },
             color: '#333',
             padding: { bottom: 14 }
           },
           tooltip: {
             callbacks: {
-              // En barras horizontales el valor está en ctx.parsed.x (no .y)
               label: ctx => ` ${ctx.parsed.x} restaurantes`
             }
           }
         },
         scales: {
-          // Al ser horizontal, los valores numéricos van en el eje X
           x: {
             beginAtZero: true,
             ticks: { stepSize: 1, color: '#555' },
             grid: { color: 'rgba(0,0,0,0.06)' }
           },
-          // Las etiquetas (categorías) van en el eje Y
           y: {
             ticks: { color: '#555' },
             grid: { display: false }

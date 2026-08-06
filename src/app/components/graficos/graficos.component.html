@@ -9,7 +9,7 @@
   <ion-grid class="graficos-grid">
     <ion-row>
 
-      <!-- Gráfico 1: Restaurantes por territorio -->
+      <!-- Gráfico 1: Restaurantes por territorio (barras verticales) -->
       <ion-col size="12" size-lg="7">
         <ion-card class="chart-card">
           <ion-card-content>
@@ -20,19 +20,30 @@
         </ion-card>
       </ion-col>
 
-      <!-- Gráfico 2: Distinciones gastronómicas (barras horizontales) -->
+      <!-- Gráfico 2: Distinciones gastronómicas por territorio (line chart) -->
       <ion-col size="12" size-lg="5">
         <ion-card class="chart-card">
           <ion-card-content>
-            <div class="chart-wrapper chart-horizontal-small">
-              <canvas #canvasMichelin></canvas>
+            <div class="chart-wrapper chart-line">
+              <canvas #canvasLinea></canvas>
             </div>
           </ion-card-content>
         </ion-card>
       </ion-col>
 
-      <!-- Gráfico 3: Top 10 localidades (donut) -->
-      <ion-col size="12">
+      <!-- Gráfico 3: Restaurantes por tipo de establecimiento (barras horizontales) -->
+      <ion-col size="12" size-lg="5">
+        <ion-card class="chart-card">
+          <ion-card-content>
+            <div class="chart-wrapper chart-horizontal">
+              <canvas #canvasTipos></canvas>
+            </div>
+          </ion-card-content>
+        </ion-card>
+      </ion-col>
+
+      <!-- Gráfico 4: Top 10 localidades (donut) -->
+      <ion-col size="12" size-lg="7">
         <ion-card class="chart-card">
           <ion-card-content>
             <div class="chart-wrapper chart-donut-full">

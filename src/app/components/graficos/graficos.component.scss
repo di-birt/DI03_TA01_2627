@@ -24,6 +24,7 @@
   width: 100%;
 
   &.chart-bar             { height: 280px; }
-  &.chart-horizontal-small{ height: 200px; }
+  &.chart-line            { height: 280px; }
+  &.chart-horizontal      { height: 320px; }
   &.chart-donut-full      { height: 400px; }
 }
