@@ -227,7 +227,39 @@ export class GraficosComponent implements OnDestroy {
     }));
   }
 
-  // Gráfico 2 — Line chart: total de estrellas Michelin y soles Repsol por territorio
+  // *************************************************************************
+  // GRÁFICO 2 — Línea: distinciones gastronómicas por territorio
+  //
+  // TIPO: 'line' (líneas que unen los puntos de datos de cada serie)
+  //
+  // PREPARACIÓN DE DATOS:
+  //   Recorremos el array y acumulamos en un Map<territorio, {michelin, repsol}>
+  //   el total de estrellas Michelin y soles Repsol de cada territorio.
+  //   Después filtramos los territorios sin ninguna distinción para no
+  //   mostrar entradas vacías, y ordenamos alfabéticamente para que las
+  //   etiquetas del eje X sean consistentes entre filtrados.
+  //
+  // DOS DATASETS (dos líneas):
+  //   Chart.js acepta múltiples datasets en el mismo canvas; cada uno
+  //   dibuja su propia línea con su color y aparece en la leyenda.
+  //   · dataset[0] → estrellas Michelin  (rojo #eb445a)
+  //   · dataset[1] → soles Repsol        (amarillo #ffc409)
+  //
+  // fill: true → rellena el área bajo la línea con el mismo color al 13%
+  //   de opacidad (sufijo '22' en hex), dando profundidad visual sin tapar
+  //   la segunda línea.
+  //
+  // tension: 0.4 → suaviza la línea con curvas Bézier cúbicas.
+  //   0 = línea recta entre puntos; 1 = curva muy pronunciada.
+  //
+  // pointRadius / pointHoverRadius: tamaño del círculo en cada punto de dato.
+  //   Al pasar el ratón el radio aumenta para mejorar la interactividad.
+  //
+  // LEYENDA (display: true):
+  //   Con dos series es imprescindible mostrar la leyenda para distinguirlas.
+  //   usePointStyle: true dibuja el marcador con la misma forma que los puntos
+  //   de la línea en lugar de un rectángulo.
+  // *************************************************************************
   private renderLinea(data: Restaurante[], canvas: HTMLCanvasElement) {
     this.destroyChart('linea');
 
@@ -309,7 +341,34 @@ export class GraficosComponent implements OnDestroy {
     }));
   }
 
-  // Gráfico 3 — Barras horizontales: restaurantes por tipo de establecimiento
+  // *************************************************************************
+  // GRÁFICO 3 — Barras horizontales: restaurantes por tipo de establecimiento
+  //
+  // TIPO: 'bar' con indexAxis: 'y'
+  //   Por defecto las barras son verticales (indexAxis: 'x').
+  //   Cambiando a indexAxis: 'y' los ejes se intercambian:
+  //     · Eje Y → categorías (tipos de establecimiento), sin escala numérica.
+  //     · Eje X → valores numéricos (cantidad de restaurantes).
+  //   Las barras horizontales son más legibles cuando las etiquetas
+  //   de categoría son largas y no caben en el eje X sin rotarlas.
+  //
+  // PREPARACIÓN DE DATOS:
+  //   Igual que en el gráfico de territorios: Map<tipo, conteo> + ordenación
+  //   de mayor a menor para que la barra más larga quede arriba.
+  //
+  // COLORES:
+  //   COLORS amplía la paleta a 10 entradas para cubrir más tipos sin repetir.
+  //   El sufijo 'bb' (alpha ~73%) da relleno semitransparente con borde sólido.
+  //
+  // ESCALAS CON EJES INVERTIDOS respecto a las barras verticales:
+  //   · scales.x → ahora es el eje de valores (beginAtZero: true, stepSize: 1)
+  //   · scales.y → ahora es el eje de categorías (sin cuadrícula)
+  //   En barras verticales era al revés (x = categorías, y = valores).
+  //
+  // borderRadius: 6 → redondea el extremo derecho de cada barra.
+  //   En modo horizontal, borderSkipped no es necesario porque el redondeo
+  //   solo afecta al extremo libre (el opuesto a la base).
+  // *************************************************************************
   private renderTipoRestaurante(data: Restaurante[], canvas: HTMLCanvasElement) {
     this.destroyChart('tipos');
 
@@ -370,7 +429,7 @@ export class GraficosComponent implements OnDestroy {
   }
 
   // *************************************************************************
-  // GRÁFICO 3 — Donut: top 10 localidades con más restaurantes
+  // GRÁFICO 4 — Donut: top 10 localidades con más restaurantes
   //
   // TIPO: 'doughnut' (donut = variante del gráfico de sectores/pie con hueco)
   //   · 'pie' rellena todo el círculo.
