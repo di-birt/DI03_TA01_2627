@@ -1,58 +1,10 @@
-@if (restaurantes().length === 0) {
-  <ion-item lines="none" color="light" class="sin-datos">
+@if (selecciones().length === 0) {
+  <ion-item lines="none" color="light">
     <ion-icon slot="start" name="bar-chart-outline" color="medium"></ion-icon>
-    <ion-label class="ion-text-wrap">
-      No hay datos que mostrar. Ajusta los filtros o pulsa <strong>Cargar</strong>.
-    </ion-label>
+    <ion-label>No hay datos que mostrar.</ion-label>
   </ion-item>
 } @else {
-  <ion-grid class="graficos-grid">
-    <ion-row>
-
-      <!-- Gráfico 1: Restaurantes por territorio (barras verticales) -->
-      <ion-col size="12" size-lg="7">
-        <ion-card class="chart-card">
-          <ion-card-content>
-            <div class="chart-wrapper chart-bar">
-              <canvas #canvasTerritorios></canvas>
-            </div>
-          </ion-card-content>
-        </ion-card>
-      </ion-col>
-
-      <!-- Gráfico 2: Distinciones gastronómicas por territorio (line chart) -->
-      <ion-col size="12" size-lg="5">
-        <ion-card class="chart-card">
-          <ion-card-content>
-            <div class="chart-wrapper chart-line">
-              <canvas #canvasLinea></canvas>
-            </div>
-          </ion-card-content>
-        </ion-card>
-      </ion-col>
-
-      <!-- Gráfico 3: Restaurantes por tipo de establecimiento (barras horizontales) -->
-      <ion-col size="12" size-lg="5">
-        <ion-card class="chart-card">
-          <ion-card-content>
-            <div class="chart-wrapper chart-horizontal">
-              <canvas #canvasTipos></canvas>
-            </div>
-          </ion-card-content>
-        </ion-card>
-      </ion-col>
-
-      <!-- Gráfico 4: Top 10 localidades (donut) -->
-      <ion-col size="12" size-lg="7">
-        <ion-card class="chart-card">
-          <ion-card-content>
-            <div class="chart-wrapper chart-donut-full">
-              <canvas #canvasLocalidades></canvas>
-            </div>
-          </ion-card-content>
-        </ion-card>
-      </ion-col>
-
-    </ion-row>
-  </ion-grid>
+  <div class="chart-wrapper">
+    <canvas #canvasGoles></canvas>
+  </div>
 }
