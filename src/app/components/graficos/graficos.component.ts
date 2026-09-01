@@ -25,6 +25,7 @@ export class GraficosComponent implements OnDestroy {
 
   // Guarda la instancia de Chart para destruirla antes de redibujar.
   // Sin esto Chart.js lanzaría el error "Canvas is already in use".
+  // En este ejemplo, solo tendremos un único chart 'goles', pero usar un Map con claves descriptivas es buena práctica cuando el componente puede crecer con más gráficas en el futuro.
   private charts = new Map<string, Chart>();
 
   // effect() se re-ejecuta automáticamente cada vez que cambia selecciones()
@@ -96,14 +97,19 @@ export class GraficosComponent implements OnDestroy {
           }
         },
         scales: {
+          //tick -> Valores de los ejes.
           y: {
             // beginAtZero: true → el eje Y empieza en 0, evita gráficas engañosas
-            beginAtZero: true,
+            beginAtZero: true, 
+            //stepSize:1 -> Los números del eje y aparecen en intervalos de 1 (0,1,2,3,...)
             ticks: { stepSize: 1, color: '#555' },
-            grid: { color: 'rgba(0,0,0,0.06)' }
+            //grid: El color de las líneas del fondo. (Se ven en horizontal para marcar el nivel del eje Y). Color 0,0,0 + opacidad 0.06
+            grid: { color: 'rgba(0,0,0,0.06)' } 
           },
           x: {
+            //maxRotation: 45 -> Si las etiquetas del eje X son largas, las rota hasta un máximo de 45 grados.
             ticks: { color: '#555', maxRotation: 45 },
+            // En este caso no queremos mostrar las líneas en el eje X.
             grid: { display: false }
           }
         }
