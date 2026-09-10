@@ -54,10 +54,13 @@ export class GraficosComponent implements OnDestroy {
   // COLORS[i % COLORS.length] cicla la paleta cuando hay más barras que colores.
   // El sufijo 'bb' en hex equivale a ~73 % de opacidad (relleno semitransparente).
   // ──────────────────────────────────────────────────────────────────────────
-  private renderGoles(data: Seleccion[], canvas: HTMLCanvasElement) {
+  private renderGoles(seleccion: Seleccion[], canvas: HTMLCanvasElement) {
     this.destroyChart('goles');
 
-    const sorted = [...data].sort((a, b) => b.goles - a.goles);
+    //Es importante crear una copia de seleccion, ya que sort modifica el array seleccion original
+    // NO ESTARÍA BIEN: const sel = seleccion;
+    // ESTO ES LO MISMO Y ESTÁ BIEN: const sel = [...seleccion]; y luego hacer sel.sort... 
+    const sorted = [...seleccion].sort((a, b) => b.goles - a.goles);
     const COLORS = ['#3880ff', '#2dd36f', '#eb445a', '#ffc409', '#5260ff',
                     '#0cd1e8', '#f7a34b', '#a855f7', '#10dc60', '#92949c'];
 
